@@ -1,4 +1,21 @@
-nume fisier: poza.bmp
+
+ nume fisier: f1.txt
+dimensiune: 42 bytes
+identificatorul utilizatorului: 1000
+timpul ultimei modificari: 18.11.2023
+contorul de legaturi: 1
+drepturi de acces user: RW-
+drepturi de acces grup: RW-
+drepturi de acces altii: R--
+
+ nume legatura: f3.txt
+dimensiune legatura: 6
+dimensiune fisier target: 6
+drepturi de acces user legatura: RWX
+drepturi de acces grup legatura: R--
+drepturi de acces altii legatura: ---
+
+ nume fisier: poza.bmp
 inaltime: 1280
 lungime: 1920
 dimensiune: 7372938 bytes
@@ -8,7 +25,17 @@ contorul de legaturi: 1
 drepturi de acces user: RW-
 drepturi de acces grup: RW-
 drepturi de acces altii: R--
-nume fisier: imagine.bmp
+
+ nume fisier: f2.txt
+dimensiune: 0 bytes
+identificatorul utilizatorului: 1000
+timpul ultimei modificari: 18.11.2023
+contorul de legaturi: 1
+drepturi de acces user: RW-
+drepturi de acces grup: RW-
+drepturi de acces altii: R--
+
+ nume fisier: imagine.bmp
 inaltime: 1280
 lungime: 1920
 dimensiune: 7372938 bytes
@@ -18,12 +45,14 @@ contorul de legaturi: 1
 drepturi de acces user: RW-
 drepturi de acces grup: RW-
 drepturi de acces altii: R--
-nume director: blabla
+
+ nume director: blabla
 identificatorul utilizatorului: 1000
 drepturi de acces user: RWX
 drepturi de acces grup: R--
 drepturi de acces altii: ---
-nume director: d2
+
+ nume director: d2
 identificatorul utilizatorului: 1000
 drepturi de acces user: RWX
 drepturi de acces grup: R--

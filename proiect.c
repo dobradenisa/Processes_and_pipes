@@ -58,6 +58,19 @@ void readBMPHeader(int fIn, BMPHeader *bmpHeader) {
         showErrorAndExit("Eroare: Fisierul nu a putut fi citit");
     }
 }
+int isOrdinaryFileWithoutBMPExtension(const char *file_name) {
+    struct stat file_stats;
+    if (lstat(file_name, &file_stats) == -1) return -1;
+
+    if (!S_ISREG(file_stats.st_mode)) return 0;  
+
+    const char *extension = strrchr(file_name, '.');
+    if (extension != NULL && strcmp(extension, ".bmp") == 0) {
+        return 0;  
+    }
+
+    return 1;  // Este un fișier obișnuit fără extensia BMP
+}
 
 int isSymbolicLink(const char *file_name) {
     struct stat file_stats;
@@ -107,7 +120,7 @@ void processDirectory(const char *dirPath, int fOut) {
             }
             targetPath[targetSize] = '\0';
 
-            sprintf(buffer, "nume legatura: %s\n", entry->d_name);
+            sprintf(buffer, "\n nume legatura: %s\n", entry->d_name);
             write(fOut, buffer, strlen(buffer));
 
             sprintf(buffer, "dimensiune legatura: %ld\n", (long)linkStat.st_size);
@@ -132,7 +145,7 @@ void processDirectory(const char *dirPath, int fOut) {
                 continue;
             }
 
-            sprintf(buffer, "nume director: %s\n", entry->d_name);
+            sprintf(buffer, "\n nume director: %s\n", entry->d_name);
             write(fOut, buffer, strlen(buffer));
 
             sprintf(buffer, "identificatorul utilizatorului: %ld\n", (long)dirStat.st_uid);
@@ -167,7 +180,7 @@ void processDirectory(const char *dirPath, int fOut) {
 
             strftime(timeBuffer, sizeof(timeBuffer), "%d.%m.%Y", localtime(&fileStat.st_mtime));
 
-            sprintf(buffer, "nume fisier: %s\n", entry->d_name);
+            sprintf(buffer, "\n nume fisier: %s\n", entry->d_name);
             write(fOut, buffer, strlen(buffer));
 
             sprintf(buffer, "inaltime: %u\n", bmpHeader.height);
@@ -207,6 +220,48 @@ void processDirectory(const char *dirPath, int fOut) {
             write(fOut, buffer, strlen(buffer));
 
             close(fIn);
+        }else if (isOrdinaryFileWithoutBMPExtension(filePath)) {
+            struct stat fileStat;
+    if (lstat(filePath, &fileStat) == -1) {
+        perror("Eroare la obtinerea informatiilor despre fisier");
+        continue;
+    }
+
+    char timeBuffer[30];
+    strftime(timeBuffer, sizeof(timeBuffer), "%d.%m.%Y", localtime(&fileStat.st_mtime));
+
+    sprintf(buffer, "\n nume fisier: %s\n", entry->d_name);
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "dimensiune: %ld bytes\n", (long)fileStat.st_size);
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "identificatorul utilizatorului: %ld\n", (long)fileStat.st_uid);
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "timpul ultimei modificari: %s\n", timeBuffer);
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "contorul de legaturi: %ld\n", (long)fileStat.st_nlink);
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "drepturi de acces user: %c%c%c\n",
+            (fileStat.st_mode & S_IRUSR) ? 'R' : '-',
+            (fileStat.st_mode & S_IWUSR) ? 'W' : '-',
+            (fileStat.st_mode & S_IXUSR) ? 'X' : '-');
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "drepturi de acces grup: %c%c%c\n",
+            (fileStat.st_mode & S_IRGRP) ? 'R' : '-',
+            (fileStat.st_mode & S_IWGRP) ? 'W' : '-',
+            (fileStat.st_mode & S_IXGRP) ? 'X' : '-');
+    write(fOut, buffer, strlen(buffer));
+
+    sprintf(buffer, "drepturi de acces altii: %c%c%c\n",
+            (fileStat.st_mode & S_IROTH) ? 'R' : '-',
+            (fileStat.st_mode & S_IWOTH) ? 'W' : '-',
+            (fileStat.st_mode & S_IXOTH) ? 'X' : '-');
+    write(fOut, buffer, strlen(buffer));
         }
     }
 
