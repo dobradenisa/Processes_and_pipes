@@ -1,0 +1,9 @@
+
+ nume fisier: f1.txt
+dimensiune: 42 bytes
+identificatorul utilizatorului: 1000
+timpul ultimei modificari: 18.11.2023
+contorul de legaturi: 1
+drepturi de acces user: RW-
+drepturi de acces grup: RW-
+drepturi de acces altii: R--

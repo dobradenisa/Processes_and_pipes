@@ -1,0 +1,7 @@
+
+ nume legatura: f3.txt
+dimensiune legatura: 6
+dimensiune fisier target: 6
+drepturi de acces user legatura: RWX
+drepturi de acces grup legatura: R--
+drepturi de acces altii legatura: ---
