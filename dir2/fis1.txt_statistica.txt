@@ -1,0 +1,9 @@
+
+ nume fisier: fis1.txt
+dimensiune: 229 bytes
+identificatorul utilizatorului: 1000
+timpul ultimei modificari: 06.12.2023
+contorul de legaturi: 1
+drepturi de acces user: RW-
+drepturi de acces grup: RW-
+drepturi de acces altii: R--

@@ -13,9 +13,9 @@
 
 typedef struct
 {
-    uint32_t fileSize;
-    uint32_t reserved;
-    uint32_t dataOffset;
+    uint32_t fileSize; //dim intreg fis
+    uint32_t reserved; 
+    uint32_t dataOffset; 
     uint32_t headerSize;
     uint32_t width;
     uint32_t height;
@@ -31,10 +31,10 @@ void showErrorAndExit(const char *errorMessage)
 int isBmp(const char *file_name)
 {
     struct stat file_stats;
-    if (lstat(file_name, &file_stats) == -1)
+    if (lstat(file_name, &file_stats) == -1) // pt a obtine inf despre fis
         return -1;
 
-    if (!S_ISREG(file_stats.st_mode))
+    if (!S_ISREG(file_stats.st_mode)) //verif daca e fis regulat
         return 0;
 
     int bmp_file = open(file_name, O_RDONLY);
@@ -42,7 +42,7 @@ int isBmp(const char *file_name)
         return -1;
 
     char signature[2];
-    if (read(bmp_file, signature, 2) != 2)
+    if (read(bmp_file, signature, 2) != 2) //citesct prim 2 bytes
     {
         close(bmp_file);
         return 0;
@@ -118,11 +118,12 @@ void convertToGrayscale(const char *filePath, const char *outputDir)
         showErrorAndExit("Nu s-a reusit deschiderea fisierului");
     }
 
-    printf("Converting %s to grayscale...\n", filePath);
+   // printf("Converting %s to grayscale...\n", filePath);
 
     // creez o copie a fisierului .bmp in folderul de output
-    char copyPath[512];
-    sprintf(copyPath, "%s/%s_copy.bmp", outputDir, strrchr(filePath, '/') + 1);
+    char copyPath[512]; 
+    sprintf(copyPath, "%s/%s_copy.bmp", outputDir, strrchr(filePath, '/') + 1);//construiesc calea catre copie
+    //strrchr(filepath, '/') - ret un pointer la ultimul caract '/' din fis filepath, adaugand 1 se obtine un pointer la primul caract dupa ultimul '/' 
     if ((fOut = open(copyPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
     {
         perror("Nu s-a reusit crearea fisierului de copie");
@@ -130,11 +131,11 @@ void convertToGrayscale(const char *filePath, const char *outputDir)
         exit(EXIT_FAILURE);
     }
 
-    char buffer[4096];
-    ssize_t bytesRead;
-    while ((bytesRead = read(fIn, buffer, sizeof(buffer))) > 0)
+    char buffer[4096];//pt a stoca temporar datele citite din fis
+    ssize_t bytesRead;//stocheaza nr de octeti cititi intr o iteratie
+    while ((bytesRead = read(fIn, buffer, sizeof(buffer))) > 0) 
     {
-        if (write(fOut, buffer, bytesRead) != bytesRead)
+        if (write(fOut, buffer, bytesRead) != bytesRead)//verif daca nr de octeti scrisi nu este egsl cu nr de octeti cititi 
         {
             perror("Eroare la scrierea in fisierul de copie");
             close(fIn);
@@ -154,17 +155,20 @@ void convertToGrayscale(const char *filePath, const char *outputDir)
 
     BMPHeader bmpHeader;
     readBMPHeader(fOut, &bmpHeader);
-    size_t headerSize = bmpHeader.headerSize;
+    size_t headerSize = bmpHeader.headerSize;//extrag dim antetului
 
     lseek(fOut, headerSize, SEEK_SET); // Skip header
 
-    uint8_t pixels[3000];
-    ssize_t bytesReadOut;
+    uint8_t pixels[3000];//datele pixelilor imaginii
+    ssize_t bytesReadOut; //pt a urmari nr de octeti cititi in fiecare bucla
     while ((bytesReadOut = read(fOut, pixels, sizeof(pixels))) > 0)
-    {   
-        lseek(fOut, -bytesReadOut, SEEK_CUR);
-        for(int i = 0; i < bytesReadOut; i=i + 3){
+    {   //dupa ce sunt cititi octetii, cursorul fis este mutat inapoi cu o dist egala cu nr de octeti cititi
+        //ca sa se poata scrie valorile noilor pixeli in acelasi loc
+        lseek(fOut, -bytesReadOut, SEEK_CUR); 
+        for(int i = 0; i < bytesReadOut; i=i + 3)//blocuri de cate 3 octeti reprez val componentelor RGB
+        {
             uint8_t grayValue = (uint8_t)(0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2]);
+            //val calculata este scrisa de 3 ori ca sa se pastreze aceeasi val pt toate cele 3 comp R G B
             write(fOut, &grayValue, sizeof(grayValue));
             write(fOut, &grayValue, sizeof(grayValue));
             write(fOut, &grayValue, sizeof(grayValue));
@@ -184,32 +188,36 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
         showErrorAndExit("Nu s-a reusit deschiderea directorului");
     }
 
-    char buffer[512];
+    char buffer[512];//pt mesajele pe care le scriu in fis statistica
 
-    int sentence_pipe[2];
-    if (pipe(sentence_pipe) == -1)
+    int sentence_pipe[2];//pipe pt comunicarea intre procesul principal si procesele copil
+
+    if (pipe(sentence_pipe) == -1)//creare canal de comunicare intre procese
     {
         showErrorAndExit("Pipe creation failed");
     }
+
     while ((entry = readdir(dir)) != NULL)
     {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)//iterez prin continutul dir deschis
         {
             continue; // ignor "." and ".."
         }
 
         char filePath[512];
         sprintf(filePath, "%s/%s", dirPath, entry->d_name);
+
+        //pt fiecare fisier/ director gasit se creeaza un proces copil
         pid_t pid = fork();
 
         if (pid == -1)
         {
-            perror("Eroare la fork");
-            exit(EXIT_FAILURE);
+            showErrorAndExit("Eroare la fork");
         }
 
         if (pid == 0)
         { // procesare fiu
+            //se constr numele fis de statistici in dir de output
             char outputFileName[512];
             sprintf(outputFileName, "%s/%s_statistica.txt", outputDir, entry->d_name);
 
@@ -227,8 +235,8 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
                     showErrorAndExit("Eroare la obtinerea informatiilor despre legatura simbolica");
                 }
 
-                char targetPath[512];
-                ssize_t targetSize = readlink(filePath, targetPath, sizeof(targetPath) - 1);
+                char targetPath[512];//calea catre dest legaturii
+                ssize_t targetSize = readlink(filePath, targetPath, sizeof(targetPath) - 1);//pt a citi destinatia leg
                 if (targetSize == -1)
                 {
                     showErrorAndExit("Eroare la citirea legaturii simbolice");
@@ -297,7 +305,7 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
 
                 readBMPHeader(fIn, &bmpHeader);
 
-                char timeBuffer[30];
+                char timeBuffer[30];//pt a stoca data si ora ultimei modif
                 struct stat fileStat;
                 if (lstat(filePath, &fileStat) == -1)
                 {
@@ -305,6 +313,7 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
                 }
 
                 strftime(timeBuffer, sizeof(timeBuffer), "%d.%m.%Y", localtime(&fileStat.st_mtime));
+                //strftime- pt a formata data si ora
 
                 sprintf(buffer, "\n nume fisier: %s\n", entry->d_name);
                 write(childFOut, buffer, strlen(buffer));
@@ -394,12 +403,14 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
             }
 
             close(childFOut);
+            //se inchid capetele pipe ului
             close(sentence_pipe[0]); // read
             close(sentence_pipe[1]); // write
-            exit(EXIT_SUCCESS);
+            exit(EXIT_SUCCESS);//procesul copil se termina cu succes
         }
+        //in procesul parinte
         if (isBmp(filePath)){
-                pid_t pidConvert = fork();
+                pid_t pidConvert = fork();//nou proces pt conversie care va apela functia de conversie
 
                 if (pidConvert == -1)
                 {
@@ -416,7 +427,7 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
         }
         else if(isOrdinaryFileWithoutBMPExtension(filePath)){
 
-                pid_t pid2 = fork();
+                pid_t pid2 = fork();//nou proces pt a exec script shell pe fis obisnuit
                 if (pid2 == -1)
                 {
                     showErrorAndExit("Eroare la fork pentru fisier obisnuit");
@@ -425,20 +436,21 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
                 if (pid2 == 0)
                 {
                     close(sentence_pipe[0]); // read
-                    char script[50];
-                    strcpy(script, "./script.sh ");
-                    strcat(script, caracter);
-                    strcat(script, " < ");
+                    char script[50];//pt a stoca comanda scriptului
+                    strcpy(script, "./script.sh "); //calea catre script
+                    strcat(script, caracter); //caracterul dat ca arg
+                    strcat(script, " < ");//redirect fis
                     strcat(script, dirPath);
                     strcat(script, "/");
-                    strcat(script, entry->d_name);
-                    int status = WEXITSTATUS(system(script));
-                    if (write(sentence_pipe[1], &status, 4) == -1)
+                    strcat(script, entry->d_name);//numele fis obisnuit
+                    int status = WEXITSTATUS(system(script));//execut comanda specificata de sirul script
+                    //WEXITSTATUS - util pt a obt statusul de iesire al procesului fiu
+                    if (write(sentence_pipe[1], &status, 4) == -1)//scriu statusul de iesire in capatul de write al pipe ului
                     {
                         showErrorAndExit("Error writing to pipe");
                     }
-                    close(sentence_pipe[1]);
-                    exit(EXIT_SUCCESS);
+                    close(sentence_pipe[1]);//write
+                    exit(EXIT_SUCCESS);//procesul fiu se incheie cu succes
                 }
         }
     }
@@ -447,12 +459,12 @@ void processDirectory(const char *dirPath, const char *outputDir, int fOut, char
     close(sentence_pipe[1]); // write
     pid_t child_pid;
     int status;
-    while ((child_pid = wait(&status)) > 0)
+    while ((child_pid = wait(&status)) > 0)//pt a astepta terminarea oricarui proces copil
     {
         printf("Process with pid = %d finished with code: %d \n", child_pid, WEXITSTATUS(status));
     }
-    int sum = 0;
-    int number;
+    int sum = 0;//pt a calcula suma rez provenite de la procesul copil
+    int number;//valorile citite din pipe
     while (read(sentence_pipe[0], &number, 4) > 0)
     {
         sum += number;

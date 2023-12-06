@@ -1,0 +1,7 @@
+
+ nume legatura: fis3.txt
+dimensiune legatura: 8
+dimensiune fisier target: 8
+drepturi de acces user legatura: RWX
+drepturi de acces grup legatura: R--
+drepturi de acces altii legatura: ---
